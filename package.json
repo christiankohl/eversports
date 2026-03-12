@@ -1,0 +1,12 @@
+{
+  "name": "eversports-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "login": "node login.js",
+    "book": "node book.js"
+  },
+  "dependencies": {
+    "playwright": "^1.42.0"
+  }
+}

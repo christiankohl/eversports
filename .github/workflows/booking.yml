@@ -1,0 +1,31 @@
+name: eversports-booking
+
+on:
+  schedule:
+    - cron: "59 15 * * *"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm install
+
+      - name: Install browsers
+        run: npx playwright install --with-deps
+
+      - name: Restore auth
+        run: echo '${{ secrets.EVERSPORTS_AUTH }}' > auth.json
+
+      - name: Run booking
+        run: node book.js
