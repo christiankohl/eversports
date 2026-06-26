@@ -2,7 +2,12 @@ name: eversports-booking
 
 on:
   schedule:
-    - cron: "59 15 * * *"
+    # Mo 07:45 UTC → wartet auf 10:00 Berlin (Sa-Kurs, 2-Wochen-Rhythmus)
+    # Max. Wartezeit: ~15 min (Sommer) / ~75 min (Winter)
+    - cron: "45 7 * * 1"
+    # So/Mi/Do 14:45 UTC → wartet auf 17:00 Berlin (Fr/Mo/Di-Kurs)
+    # Max. Wartezeit: ~15 min (Sommer) / ~75 min (Winter)
+    - cron: "45 14 * * 0,3,4"
   workflow_dispatch:
 
 jobs:
@@ -22,7 +27,7 @@ jobs:
         run: npm install
 
       - name: Install browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
 
       - name: Restore auth
         run: echo '${{ secrets.EVERSPORTS_AUTH }}' > auth.json
