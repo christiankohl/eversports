@@ -98,7 +98,7 @@ async function sendNotification(courses) {
   await fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
     method: "POST",
     headers: {
-      Title: "📅 Kurse diese Woche",
+      Title: "Kurse diese Woche",
       Actions: `view, Verwalten, ${pageUrl}`,
     },
     body,
