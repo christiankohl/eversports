@@ -125,15 +125,15 @@ async function waitForRelease(releaseTime) {
 
   // Slot → Activity-Seite
   console.log("Slot gefunden → öffnen");
-  await slot.first().scrollIntoViewIfNeeded();
-  const box = await slot.first().boundingBox();
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
-  await page.waitForURL(/\/activity\//, { timeout: 10000 });
+  // UUID direkt aus dem Slot lesen → Activity-Seite überspringen
+  const uuid = await slot.first().getAttribute("data-uuid");
+  const venueId = "e4ebe91e-e4b4-450a-b32c-f4ba46e6e936";
+  console.log(`Session UUID: ${uuid}`);
 
-  // Activity-Seite → Phoenix Checkout
-  const bookLink = page.getByRole("link", { name: /jetzt buchen/i });
-  await bookLink.waitFor({ timeout: 10000 });
-  await bookLink.click();
+  await page.goto(
+    `https://www.eversports.de/phoenix?bookableItemId=${uuid}&origin=eversport&venueId=${venueId}`,
+    { waitUntil: "domcontentloaded" }
+  );
   await page.waitForURL(/\/phoenix\//, { timeout: 10000 });
 
   // Produkt auswählen (erste Karte) und buchen
