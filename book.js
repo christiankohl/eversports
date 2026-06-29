@@ -157,8 +157,10 @@ async function waitForRelease(releaseTime) {
     .first();
   if (await productCard.count() > 0) {
     await productCard.click();
-    await page.waitForTimeout(1500);
-    console.log("Produkt ausgewählt");
+    await page.waitForTimeout(3000);
+    await page.screenshot({ path: "screenshot-after-product.png" });
+    const allButtons = await page.getByRole("button").allInnerTexts();
+    console.log("Buttons nach Produkt-Klick:", allButtons, "URL:", page.url());
   }
 
   const checkoutButton = page.getByRole("button", { name: /weiter|next/i });
