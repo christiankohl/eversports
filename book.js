@@ -142,7 +142,9 @@ async function waitForRelease(releaseTime) {
 
   // Phoenix: warten bis alle Inhalte geladen
   await page.waitForURL(/\/phoenix\//, { timeout: 15000 });
-  await page.waitForLoadState("networkidle");
+  // Warten bis Continue-Button erscheint (Seite geladen, aber Karten evtl. noch im Skeleton)
+  await page.getByRole("button", { name: /continue|weiter/i }).waitFor({ timeout: 20000 });
+  await page.waitForTimeout(4000); // Karten-Skeleton abwarten
   await page.screenshot({ path: "screenshot-phoenix.png" });
   console.log("Phoenix-Seite geladen:", page.url());
 
