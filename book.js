@@ -140,15 +140,15 @@ async function waitForRelease(releaseTime) {
   await bookLink.click();
   console.log("'Jetzt buchen' geklickt");
 
-  // Phoenix: warten bis Seite bereit, dann Produkt + Checkout
+  // Phoenix: warten bis alle Inhalte geladen
   await page.waitForURL(/\/phoenix\//, { timeout: 15000 });
-  await page.waitForTimeout(3000);
+  await page.waitForLoadState("networkidle");
   await page.screenshot({ path: "screenshot-phoenix.png" });
-  await page.getByRole("button", { name: /stornierungsbedingungen|cancellation policy/i }).waitFor({ timeout: 20000 });
+  console.log("Phoenix-Seite geladen:", page.url());
 
+  // Erste Pass-Karte auswählen (alle Buttons außer Continue/Weiter)
   const productCard = page.locator("button")
-    .filter({ hasNot: page.locator("text=/Stornierungsbedingungen|Cancellation policy/i") })
-    .filter({ hasNot: page.locator("text=/Jetzt buchen|Book now/i") })
+    .filter({ hasNot: page.locator("text=/Continue|Weiter/i") })
     .first();
   if (await productCard.count() > 0) {
     await productCard.click();
@@ -156,9 +156,10 @@ async function waitForRelease(releaseTime) {
     console.log("Produkt ausgewählt");
   }
 
-  const checkoutButton = page.getByRole("button", { name: /jetzt buchen|book now/i });
+  const checkoutButton = page.getByRole("button", { name: /continue|weiter/i });
   await checkoutButton.waitFor({ timeout: 15000 });
   await checkoutButton.click();
+  console.log("Continue geklickt");
 
   await page.waitForURL(/\/confirmation/, { timeout: 15000 });
   console.log("Buchung bestätigt ✅", page.url());
