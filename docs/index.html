@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eversports – Wochenplan</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, sans-serif; background: #f5f5f5; color: #1a1a1a; padding: 16px; max-width: 480px; margin: 0 auto; }
+    h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .week { font-size: 13px; color: #888; margin-bottom: 20px; }
+    .course { background: white; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .course.disabled { opacity: .45; }
+    .toggle { width: 44px; height: 26px; background: #ccc; border-radius: 13px; border: none; cursor: pointer; position: relative; flex-shrink: 0; transition: background .2s; }
+    .toggle.on { background: #22c55e; }
+    .toggle::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+    .toggle.on::after { left: 21px; }
+    .info { flex: 1; }
+    .date { font-size: 15px; font-weight: 600; }
+    .time-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+    .time { font-size: 14px; color: #555; }
+    .time-input { font-size: 14px; border: 1px solid #ddd; border-radius: 6px; padding: 3px 8px; width: 72px; }
+    .save-hint { font-size: 11px; color: #22c55e; display: none; }
+    .setup { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .setup h2 { font-size: 15px; margin-bottom: 10px; }
+    .setup p { font-size: 13px; color: #666; margin-bottom: 12px; line-height: 1.5; }
+    input[type=text], input[type=password] { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 14px; margin-bottom: 10px; }
+    button.primary { background: #22c55e; color: white; border: none; border-radius: 8px; padding: 11px 20px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; }
+    .status { font-size: 13px; color: #888; text-align: center; margin-top: 16px; }
+    .error { color: #ef4444; }
+  </style>
+</head>
+<body>
+
+<div id="setup" style="display:none">
+  <div class="setup">
+    <h2>Einrichtung</h2>
+    <p>Einmalig nötig: GitHub Personal Access Token mit <strong>Gist-Schreibzugriff</strong> und die Gist-ID.</p>
+    <p><a href="https://github.com/settings/tokens/new?scopes=gist" target="_blank">Token erstellen →</a></p>
+    <input type="password" id="token-input" placeholder="GitHub Token (ghp_...)">
+    <input type="text" id="gist-input" placeholder="Gist ID (z.B. abc123...)">
+    <button class="primary" onclick="saveSetup()">Speichern</button>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <h1>Eversports</h1>
+  <div class="week" id="week-label"></div>
+  <div id="courses"></div>
+  <div class="status" id="status"></div>
+</div>
+
+<script>
+const DAYS = { Mo: "Montag", Di: "Dienstag", Mi: "Mittwoch", Do: "Donnerstag", Fr: "Freitag", Sa: "Samstag", So: "Sonntag" };
+
+function getConfig() {
+  return {
+    token: localStorage.getItem("gh_token"),
+    gistId: localStorage.getItem("gist_id"),
+  };
+}
+
+function saveSetup() {
+  const token = document.getElementById("token-input").value.trim();
+  const gistId = document.getElementById("gist-input").value.trim();
+  if (!token || !gistId) return alert("Bitte beide Felder ausfüllen.");
+  localStorage.setItem("gh_token", token);
+  localStorage.setItem("gist_id", gistId);
+  init();
+}
+
+async function fetchSchedule(gistId) {
+  const res = await fetch(`https://api.github.com/gists/${gistId}`);
+  if (!res.ok) throw new Error("Gist nicht gefunden.");
+  const data = await res.json();
+  return JSON.parse(data.files["schedule.json"].content);
+}
+
+async function saveSchedule(courses, week) {
+  const { token, gistId } = getConfig();
+  const content = JSON.stringify({ week, courses }, null, 2);
+  const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ files: { "schedule.json": { content } } }),
+  });
+  if (!res.ok) throw new Error("Speichern fehlgeschlagen.");
+}
+
+let schedule = null;
+
+function renderCourses() {
+  const container = document.getElementById("courses");
+  container.innerHTML = "";
+  document.getElementById("week-label").textContent = `Woche ${schedule.week}`;
+
+  schedule.courses.forEach((course, i) => {
+    const d = new Date(course.date + "T12:00:00Z");
+    const dateFormatted = d.toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
+
+    const div = document.createElement("div");
+    div.className = "course" + (course.enabled ? "" : " disabled");
+
+    div.innerHTML = `
+      <button class="toggle ${course.enabled ? "on" : ""}" onclick="toggleCourse(${i})"></button>
+      <div class="info">
+        <div class="date">${dateFormatted}</div>
+        <div class="time-row">
+          <span class="time">⏰</span>
+          <input class="time-input" type="time" value="${course.time}" onchange="changeTime(${i}, this.value)">
+          <span class="save-hint" id="hint-${i}">✓ gespeichert</span>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+async function toggleCourse(i) {
+  schedule.courses[i].enabled = !schedule.courses[i].enabled;
+  renderCourses();
+  await persist();
+}
+
+async function changeTime(i, value) {
+  schedule.courses[i].time = value;
+  await persist();
+  const hint = document.getElementById(`hint-${i}`);
+  if (hint) { hint.style.display = "inline"; setTimeout(() => hint.style.display = "none", 2000); }
+}
+
+async function persist() {
+  const status = document.getElementById("status");
+  try {
+    await saveSchedule(schedule.courses, schedule.week);
+    status.textContent = "Gespeichert ✓";
+    status.className = "status";
+    setTimeout(() => status.textContent = "", 2000);
+  } catch (e) {
+    status.textContent = "Fehler: " + e.message;
+    status.className = "status error";
+  }
+}
+
+async function init() {
+  const { token, gistId } = getConfig();
+  if (!token || !gistId) {
+    document.getElementById("setup").style.display = "block";
+    document.getElementById("app").style.display = "none";
+    return;
+  }
+  document.getElementById("setup").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  document.getElementById("status").textContent = "Lade…";
+  try {
+    schedule = await fetchSchedule(gistId);
+    renderCourses();
+    document.getElementById("status").textContent = "";
+  } catch (e) {
+    document.getElementById("status").textContent = "Fehler: " + e.message;
+    document.getElementById("status").className = "status error";
+  }
+}
+
+init();
+</script>
+</body>
+</html>

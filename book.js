@@ -73,6 +73,31 @@ async function waitForRelease(releaseTime) {
     }
 
     releaseTime = schedule.releaseTime;
+
+    // Gist-Check: Kurs deaktiviert oder andere Zeit gewählt?
+    if (process.env.GIST_ID) {
+      try {
+        const res = await fetch(`https://api.github.com/gists/${process.env.GIST_ID}`);
+        if (res.ok) {
+          const gist = await res.json();
+          const data = JSON.parse(gist.files["schedule.json"].content);
+          const entry = data.courses.find(c => c.date === targetDate);
+          if (entry) {
+            if (!entry.enabled) {
+              console.log(`Kurs am ${targetDate} ist deaktiviert. Beende.`);
+              process.exit(0);
+            }
+            if (entry.time !== releaseTime) {
+              console.log(`Abweichende Zeit: ${releaseTime} → ${entry.time}`);
+              releaseTime = entry.time;
+            }
+          }
+        }
+      } catch (e) {
+        console.log("Gist nicht erreichbar, nutze Standard:", e.message);
+      }
+    }
+
     console.log(`Buchungstag! Ziel: ${targetDate} @ ${releaseTime} Berlin`);
     await waitForRelease(releaseTime);
   }
