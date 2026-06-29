@@ -139,22 +139,21 @@ async function waitForRelease(releaseTime) {
   await page.screenshot({ path: "screenshot-activity.png" });
   console.log("Screenshot: screenshot-activity.png");
 
-  const bookLink = page.getByRole("link", { name: /jetzt buchen/i });
+  const bookLink = page.getByRole("link", { name: /jetzt buchen|book now/i });
   await bookLink.waitFor({ timeout: 20000 });
   await bookLink.click();
   console.log("'Jetzt buchen' geklickt");
 
-  // Phoenix: warten bis alle Inhalte geladen
+  // Phoenix: warten bis Seite bereit
   await page.waitForURL(/\/phoenix\//, { timeout: 15000 });
-  // Warten bis Continue-Button erscheint (Seite geladen, aber Karten evtl. noch im Skeleton)
-  await page.getByRole("button", { name: /weiter/i }).waitFor({ timeout: 20000 });
-  await page.waitForTimeout(4000); // Karten-Skeleton abwarten
+  await page.getByRole("button", { name: /weiter|next/i }).waitFor({ timeout: 20000 });
+  await page.waitForTimeout(4000);
   await page.screenshot({ path: "screenshot-phoenix.png" });
   console.log("Phoenix-Seite geladen:", page.url());
 
-  // Erste Pass-Karte auswählen (alle Buttons außer Continue/Weiter)
+  // Erste Pass-Karte auswählen
   const productCard = page.locator("button")
-    .filter({ hasNot: page.locator("text=/Weiter/i") })
+    .filter({ hasNot: page.locator("text=/Weiter|Next/i") })
     .first();
   if (await productCard.count() > 0) {
     await productCard.click();
@@ -162,10 +161,10 @@ async function waitForRelease(releaseTime) {
     console.log("Produkt ausgewählt");
   }
 
-  const checkoutButton = page.getByRole("button", { name: /weiter/i });
+  const checkoutButton = page.getByRole("button", { name: /weiter|next/i });
   await checkoutButton.waitFor({ timeout: 15000 });
   await checkoutButton.click();
-  console.log("Next/Weiter geklickt");
+  console.log("Weiter/Next geklickt");
 
   await page.waitForTimeout(4000);
   await page.screenshot({ path: "screenshot-after-next.png" });
