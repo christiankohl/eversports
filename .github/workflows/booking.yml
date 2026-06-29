@@ -35,18 +35,6 @@ jobs:
       - name: Install deps
         run: npm install
 
-      - name: Cache Playwright browsers
-        id: pw-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ hashFiles('package.json') }}
-
-      - name: Install browsers
-        if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: npx playwright install chromium
-        timeout-minutes: 5
-
       - name: Restore auth
         run: echo '${{ secrets.EVERSPORTS_AUTH }}' > auth.json
 

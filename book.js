@@ -112,7 +112,7 @@ async function waitForRelease(releaseTime) {
   }
 
   const isTest = !!process.env.TARGET_DATE;
-  const browser = await chromium.launch({ headless: !isTest, channel: isTest ? "chrome" : undefined });
+  const browser = await chromium.launch({ headless: !isTest, channel: "chrome" });
   const context = await browser.newContext({
     storageState: "auth.json",
     locale: "de-DE",

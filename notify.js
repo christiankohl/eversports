@@ -93,7 +93,7 @@ async function scrapeSessions(page, targetDate) {
   }
   console.log("Scrape für:", targetDates.map(d => d.date));
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, channel: "chrome" });
   const context = await browser.newContext({ storageState: "auth.json", locale: "de-DE", timezoneId: "Europe/Berlin" });
   const page = await context.newPage();
   await page.goto(STUDIO_URL, { waitUntil: "domcontentloaded" });
