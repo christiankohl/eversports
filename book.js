@@ -135,7 +135,7 @@ async function waitForRelease(releaseTime) {
   await page.screenshot({ path: "screenshot-activity.png" });
   console.log("Screenshot: screenshot-activity.png");
 
-  const bookLink = page.getByRole("link", { name: /jetzt buchen/i });
+  const bookLink = page.getByRole("link", { name: /jetzt buchen|book now/i });
   await bookLink.waitFor({ timeout: 20000 });
   await bookLink.click();
   console.log("'Jetzt buchen' geklickt");
@@ -144,11 +144,11 @@ async function waitForRelease(releaseTime) {
   await page.waitForURL(/\/phoenix\//, { timeout: 15000 });
   await page.waitForTimeout(3000);
   await page.screenshot({ path: "screenshot-phoenix.png" });
-  await page.getByRole("button", { name: /stornierungsbedingungen/i }).waitFor({ timeout: 20000 });
+  await page.getByRole("button", { name: /stornierungsbedingungen|cancellation policy/i }).waitFor({ timeout: 20000 });
 
   const productCard = page.locator("button")
-    .filter({ hasNot: page.locator("text=Stornierungsbedingungen") })
-    .filter({ hasNot: page.locator("text=Jetzt buchen") })
+    .filter({ hasNot: page.locator("text=/Stornierungsbedingungen|Cancellation policy/i") })
+    .filter({ hasNot: page.locator("text=/Jetzt buchen|Book now/i") })
     .first();
   if (await productCard.count() > 0) {
     await productCard.click();
@@ -156,7 +156,7 @@ async function waitForRelease(releaseTime) {
     console.log("Produkt ausgewählt");
   }
 
-  const checkoutButton = page.getByRole("button", { name: /jetzt buchen/i });
+  const checkoutButton = page.getByRole("button", { name: /jetzt buchen|book now/i });
   await checkoutButton.waitFor({ timeout: 15000 });
   await checkoutButton.click();
 
