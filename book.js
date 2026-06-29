@@ -151,18 +151,7 @@ async function waitForRelease(releaseTime) {
   await page.screenshot({ path: "screenshot-phoenix.png" });
   console.log("Phoenix-Seite geladen:", page.url());
 
-  // Erste Pass-Karte auswählen
-  const productCard = page.locator("button")
-    .filter({ hasNot: page.locator("text=/Weiter|Next/i") })
-    .first();
-  if (await productCard.count() > 0) {
-    await productCard.click();
-    await page.waitForTimeout(3000);
-    await page.screenshot({ path: "screenshot-after-product.png" });
-    const allButtons = await page.getByRole("button").allInnerTexts();
-    console.log("Buttons nach Produkt-Klick:", allButtons, "URL:", page.url());
-  }
-
+  // Produkt ist auto-selected → direkt Next klicken
   const checkoutButton = page.getByRole("button", { name: /weiter|next/i });
   await checkoutButton.waitFor({ timeout: 15000 });
   await checkoutButton.click();
