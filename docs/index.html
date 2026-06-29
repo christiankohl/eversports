@@ -73,7 +73,12 @@ async function fetchSchedule(gistId) {
   const res = await fetch(`https://api.github.com/gists/${gistId}`);
   if (!res.ok) throw new Error("Gist nicht gefunden.");
   const data = await res.json();
-  return JSON.parse(data.files["schedule.json"].content);
+  const file = data.files["schedule.json"];
+  if (!file) {
+    // Noch kein schedule.json → leeren Platzhalter zurückgeben
+    return { week: "–", courses: [] };
+  }
+  return JSON.parse(file.content);
 }
 
 async function saveSchedule(courses, week) {
@@ -93,6 +98,11 @@ function renderCourses() {
   const container = document.getElementById("courses");
   container.innerHTML = "";
   document.getElementById("week-label").textContent = `Woche ${schedule.week}`;
+
+  if (schedule.courses.length === 0) {
+    container.innerHTML = '<p style="color:#888;font-size:14px;text-align:center;padding:20px">Noch keine Kurse – wird jeden Sonntag automatisch befüllt.</p>';
+    return;
+  }
 
   schedule.courses.forEach((course, i) => {
     const d = new Date(course.date + "T12:00:00Z");
