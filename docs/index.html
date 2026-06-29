@@ -74,11 +74,9 @@ async function fetchSchedule(gistId) {
   if (!res.ok) throw new Error("Gist nicht gefunden.");
   const data = await res.json();
   const file = data.files["schedule.json"];
-  if (!file) {
-    // Noch kein schedule.json → leeren Platzhalter zurückgeben
-    return { week: "–", courses: [] };
-  }
-  return JSON.parse(file.content);
+  if (!file) return { week: "–", courses: [] };
+  const parsed = JSON.parse(file.content);
+  return { week: parsed.week ?? "–", courses: parsed.courses ?? [] };
 }
 
 async function saveSchedule(courses, week) {
