@@ -1,31 +1,31 @@
-import { chromium } from "playwright";
+import { chromium } from "playwright-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import fs from "fs";
+
+chromium.use(StealthPlugin());
 
 (async () => {
     const browser = await chromium.launch({
-        headless: false, // sichtbar, damit du dich einloggen kannst
-        slowMo: 50,      // optional, verlangsamt Aktionen etwas für bessere Übersicht
+        headless: false,
+        channel: "chrome",
+        slowMo: 50,
     });
 
     const context = await browser.newContext({
         viewport: { width: 1280, height: 800 },
-        userAgent:
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     });
 
     const page = await context.newPage();
 
-    // Startseite aufrufen
-    await page.goto("https://www.eversports.de", { waitUntil: "networkidle" });
+    await page.goto("https://www.eversports.de", { waitUntil: "domcontentloaded" });
 
     console.log(
         "\nBitte manuell einloggen: navigiere zu /auth, melde dich an und schließe evtl. 2FA ab."
     );
 
-    // Warte 2 Minuten, damit du dich einloggen kannst
-    await page.waitForTimeout(2 * 60 * 1000);
+    // Warte 3 Minuten für Login inkl. evtl. 2FA
+    await page.waitForTimeout(3 * 60 * 1000);
 
-    // Speicher die Session inkl. Cookies und LocalStorage
     const state = await context.storageState();
     fs.writeFileSync("auth.json", JSON.stringify(state));
 
