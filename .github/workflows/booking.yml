@@ -34,3 +34,11 @@ jobs:
 
       - name: Run booking
         run: node book.js
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshot-*.png
+          if-no-files-found: ignore

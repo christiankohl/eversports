@@ -131,6 +131,9 @@ async function waitForRelease(releaseTime) {
   // Activity-Seite: "Jetzt buchen" Link klicken
   await page.waitForURL(/\/activity\//, { timeout: 15000 });
   console.log("Activity-Seite:", page.url());
+  await page.waitForTimeout(3000);
+  await page.screenshot({ path: "screenshot-activity.png" });
+  console.log("Screenshot: screenshot-activity.png");
 
   const bookLink = page.getByRole("link", { name: /jetzt buchen/i });
   await bookLink.waitFor({ timeout: 20000 });
@@ -139,6 +142,8 @@ async function waitForRelease(releaseTime) {
 
   // Phoenix: warten bis Seite bereit, dann Produkt + Checkout
   await page.waitForURL(/\/phoenix\//, { timeout: 15000 });
+  await page.waitForTimeout(3000);
+  await page.screenshot({ path: "screenshot-phoenix.png" });
   await page.getByRole("button", { name: /stornierungsbedingungen/i }).waitFor({ timeout: 20000 });
 
   const productCard = page.locator("button")
