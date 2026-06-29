@@ -9,6 +9,15 @@ on:
     # So/Mi/Do 14:45 UTC → wartet auf 17:00 Berlin (Fr/Mo/Di-Kurs)
     - cron: "45 14 * * 0,3,4"
   workflow_dispatch:
+    inputs:
+      script:
+        description: 'Welches Script ausführen?'
+        required: true
+        default: 'notify'
+        type: choice
+        options:
+          - notify
+          - book
 
 jobs:
   run:
@@ -21,7 +30,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install deps
         run: npm install
@@ -32,16 +41,20 @@ jobs:
       - name: Restore auth
         run: echo '${{ secrets.EVERSPORTS_AUTH }}' > auth.json
 
-      - name: Run notify (nur sonntags 08:00 UTC)
-        if: github.event.schedule == '0 8 * * 0' || github.event_name == 'workflow_dispatch'
+      - name: Run notify
+        if: >
+          github.event.schedule == '0 8 * * 0' ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.script == 'notify')
         env:
           GIST_ID: ${{ secrets.GIST_ID }}
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: node notify.js
 
-      - name: Run booking (alle anderen Crons)
-        if: github.event.schedule != '0 8 * * 0'
+      - name: Run booking
+        if: >
+          (github.event.schedule != '0 8 * * 0' && github.event_name == 'schedule') ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.script == 'book')
         env:
           GIST_ID: ${{ secrets.GIST_ID }}
         run: node book.js
