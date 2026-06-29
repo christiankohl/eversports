@@ -42,19 +42,22 @@
 
     /* Slot states */
     .slot-empty    { background: #fafafa; cursor: default; }
-    .slot-avail    { background: #f0fdf4; cursor: pointer; transition: background .15s; }
-    .slot-avail:hover { background: #dcfce7; }
-    .slot-on       { background: #22c55e; cursor: pointer; }
-    .slot-on:hover { background: #16a34a; }
-    .slot-past     { opacity: .5; cursor: default !important; }
+    .slot-avail    { cursor: pointer; transition: filter .15s; }
+    .slot-avail:hover { filter: brightness(.93); }
+    .slot-on       { cursor: pointer; }
+    .slot-on:hover { filter: brightness(.9); }
+    .slot-past     { opacity: .45; cursor: default !important; }
 
     /* Slot content */
     .slot-inner { display: flex; flex-direction: column; align-items: center;
                   justify-content: center; height: 100%; padding: 2px; }
     .slot-check { font-size: 14px; color: white; font-weight: 700; line-height: 1; }
-    .slot-title { font-size: 9px; color: #166534; line-height: 1; margin-top: 1px;
-                  max-width: 52px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .slot-on .slot-title { color: rgba(255,255,255,.8); }
+    .slot-title { font-size: 9px; line-height: 1; margin-top: 2px;
+                  max-width: 54px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .slot-on .slot-title { color: rgba(255,255,255,.85); }
+
+    /* Zeit-Gap-Trenner */
+    .time-gap td { height: 8px; background: #f0f2f5 !important; border-color: #f0f2f5 !important; }
 
     /* Lock button */
     .lock-wrap { max-width: 700px; margin: 14px auto 0; }
@@ -189,8 +192,16 @@ function render() {
   }
   html += "</tr></thead><tbody>";
 
-  // Rows
-  for (const time of allTimes) {
+  // Rows — mit Gap-Trenner bei Stunden-Lücken > 1h
+  for (let ti = 0; ti < allTimes.length; ti++) {
+    const time = allTimes[ti];
+    if (ti > 0) {
+      const prevH = parseInt(allTimes[ti - 1]);
+      const currH = parseInt(time);
+      if (currH - prevH > 1) {
+        html += `<tr class="time-gap"><td class="time-col"></td>${days.map(() => "<td></td>").join("")}</tr>`;
+      }
+    }
     html += `<tr><td class="time-col">${time}</td>`;
     for (const day of days) {
       const sess   = day.sessions.find(s => s.time === time);
@@ -198,18 +209,16 @@ function render() {
       if (!sess) {
         html += `<td class="slot-empty"></td>`;
       } else {
-        const isOn   = day.enabled && day.selectedTime === time;
-        const stateClass = isOn ? "slot-on" : "slot-avail";
-        const pastClass  = isPast ? " slot-past" : "";
+        const isOn      = day.enabled && day.selectedTime === time;
+        const colors    = activityColors(sess.title, isOn);
+        const stateClass = (isOn ? "slot-on" : "slot-avail") + (isPast ? " slot-past" : "");
         const clickable  = !isPast && !schedule.locked;
-        const onclick    = clickable
-          ? `onclick="selectSlot('${day.date}','${time}','${sess.uuid}',${isOn})"`
-          : "";
-        const title = sess.title ? ` title="${sess.title}"` : "";
-        html += `<td class="${stateClass}${pastClass}" ${onclick}${title}>
+        const onclick    = clickable ? `onclick="selectSlot('${day.date}','${time}','${sess.uuid}',${isOn})"` : "";
+        const label      = shortTitle(sess.title);
+        html += `<td class="${stateClass}" style="background:${colors.bg}" ${onclick} title="${sess.title}">
           <div class="slot-inner">
             ${isOn ? '<span class="slot-check">✓</span>' : ""}
-            ${sess.title ? `<span class="slot-title">${sess.title}</span>` : ""}
+            ${label ? `<span class="slot-title" style="color:${colors.title}">${label}</span>` : ""}
           </div>
         </td>`;
       }
@@ -218,6 +227,27 @@ function render() {
   }
   html += "</tbody>";
   table.innerHTML = html;
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function activityColors(title, isOn) {
+  const t = (title || "").toLowerCase();
+  if (isOn) {
+    if (t.includes("endurance")) return { bg: "#3b82f6", title: "rgba(255,255,255,.85)" };
+    if (t.includes("weight"))    return { bg: "#f97316", title: "rgba(255,255,255,.85)" };
+    if (t.includes("gymnast"))   return { bg: "#a855f7", title: "rgba(255,255,255,.85)" };
+    return                              { bg: "#22c55e", title: "rgba(255,255,255,.85)" };
+  } else {
+    if (t.includes("endurance")) return { bg: "#eff6ff", title: "#1d4ed8" };
+    if (t.includes("weight"))    return { bg: "#fff7ed", title: "#c2410c" };
+    if (t.includes("gymnast"))   return { bg: "#faf5ff", title: "#7c3aed" };
+    return                              { bg: "#f0fdf4", title: "#166534" };
+  }
+}
+function shortTitle(title) {
+  if (!title) return "";
+  // "WOD (Workout Of the Day)" → "WOD", "Gymnastics & Skills" → "Gymnastics"
+  return title.split(/[\s(]/)[0];
 }
 
 // ── Actions ───────────────────────────────────────────────

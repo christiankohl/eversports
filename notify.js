@@ -55,20 +55,24 @@ async function scrapeSessions(page, targetDate) {
   }
   // .first() verhindert doppeltes Matching wenn der Kalender die Spalte mehrfach rendert
   const day   = page.locator(`.calendar__day:has(h3[data-day="${targetDate}"])`).first();
-  const slots = day.locator(`li[data-group-id="${GROUP_ID}"]`);
+  // Alle Aktivitäten scrapen (nicht nur GROUP_ID 71206), Open Gym wird gefiltert
+  const slots = day.locator(`li[data-group-id]`);
 
   const seen = new Set();
   const sessions = [];
   for (let i = 0; i < await slots.count(); i++) {
     const slot = slots.nth(i);
-    const uuid    = await slot.getAttribute("data-uuid");
+    const uuid  = await slot.getAttribute("data-uuid");
     if (!uuid || seen.has(uuid)) continue;
     seen.add(uuid);
     const rawTime = await slot.locator(".session-time").first().innerText().catch(() => "");
     const time    = rawTime.trim().substring(0, 5);
     const title   = await slot.locator(".session-name, [class*='session-name'], [class*='sessionName']")
                               .first().innerText().catch(() => "");
-    if (time) sessions.push({ time, uuid, title: title.trim() });
+    const titleClean = title.trim();
+    if (!time) continue;
+    if (titleClean.toLowerCase().includes("open gym")) continue;
+    sessions.push({ time, uuid, title: titleClean });
   }
   return sessions;
 }
