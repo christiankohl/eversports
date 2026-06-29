@@ -5,29 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Eversports – Wochenplan</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, sans-serif; background: #f5f5f5; color: #1a1a1a; padding: 16px; max-width: 480px; margin: 0 auto; }
-    h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-    .week { font-size: 13px; color: #888; margin-bottom: 20px; }
-    .course { background: white; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    .course.disabled { opacity: .45; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f2f5; color: #1a1a1a; padding: 16px 16px 32px; max-width: 480px; margin: 0 auto; }
+
+    /* Header */
+    .header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+    h1 { font-size: 20px; font-weight: 700; }
+    .week-label { font-size: 13px; color: #888; }
+    .lock-badge { display: inline-flex; align-items: center; gap: 4px; background: #fef3c7; color: #92400e; font-size: 12px; font-weight: 600; border-radius: 20px; padding: 3px 10px; margin-bottom: 14px; }
+    .lock-badge.hidden { display: none; }
+
+    /* Cards */
+    .card { background: white; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.07); transition: opacity .2s; }
+    .card.off { opacity: .45; }
+    .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .day-name { font-size: 15px; font-weight: 600; flex: 1; }
+    .date-sub { font-size: 12px; color: #888; }
+    .booking-date { font-size: 11px; color: #aaa; margin-top: 1px; }
+
+    /* Toggle */
     .toggle { width: 44px; height: 26px; background: #ccc; border-radius: 13px; border: none; cursor: pointer; position: relative; flex-shrink: 0; transition: background .2s; }
     .toggle.on { background: #22c55e; }
-    .toggle::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+    .toggle::after { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
     .toggle.on::after { left: 21px; }
-    .info { flex: 1; }
-    .date { font-size: 15px; font-weight: 600; }
-    .time-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-    .time { font-size: 14px; color: #555; }
-    .time-input { font-size: 14px; border: 1px solid #ddd; border-radius: 6px; padding: 3px 8px; width: 72px; }
-    .save-hint { font-size: 11px; color: #22c55e; display: none; }
-    .setup { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    .setup h2 { font-size: 15px; margin-bottom: 10px; }
-    .setup p { font-size: 13px; color: #666; margin-bottom: 12px; line-height: 1.5; }
-    input[type=text], input[type=password] { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 14px; margin-bottom: 10px; }
+    .toggle:disabled { cursor: default; }
+
+    /* Session chips */
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip { padding: 6px 14px; border-radius: 20px; border: 2px solid #e5e7eb; background: white; font-size: 14px; font-weight: 500; cursor: pointer; transition: border-color .15s, background .15s; }
+    .chip.selected { border-color: #22c55e; background: #f0fdf4; color: #15803d; }
+    .chip:disabled { cursor: default; }
+    .no-sessions { font-size: 13px; color: #aaa; font-style: italic; }
+
+    /* Lock button */
+    .lock-btn { width: 100%; padding: 14px; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background .2s; margin-top: 4px; }
+    .lock-btn.unlocked { background: #22c55e; color: white; }
+    .lock-btn.locked   { background: #f59e0b; color: white; }
+
+    /* Setup + status */
+    .setup { background: white; border-radius: 14px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+    .setup h2 { font-size: 15px; margin-bottom: 8px; }
+    .setup p  { font-size: 13px; color: #666; margin-bottom: 12px; line-height: 1.5; }
+    .setup a  { color: #22c55e; }
+    input[type=text], input[type=password] { width: 100%; border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; font-size: 14px; margin-bottom: 10px; outline: none; }
+    input:focus { border-color: #22c55e; }
     button.primary { background: #22c55e; color: white; border: none; border-radius: 8px; padding: 11px 20px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; }
-    .status { font-size: 13px; color: #888; text-align: center; margin-top: 16px; }
-    .error { color: #ef4444; }
+    .status { font-size: 13px; color: #888; text-align: center; margin-top: 14px; min-height: 18px; }
+    .status.error { color: #ef4444; }
+    .empty-note { font-size: 14px; color: #888; text-align: center; padding: 32px 16px; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -38,30 +63,31 @@
     <p>Einmalig nötig: GitHub Personal Access Token mit <strong>Gist-Schreibzugriff</strong> und die Gist-ID.</p>
     <p><a href="https://github.com/settings/tokens/new?scopes=gist" target="_blank">Token erstellen →</a></p>
     <input type="password" id="token-input" placeholder="GitHub Token (ghp_...)">
-    <input type="text" id="gist-input" placeholder="Gist ID (z.B. abc123...)">
+    <input type="text"     id="gist-input"  placeholder="Gist ID (z.B. abc123...)">
     <button class="primary" onclick="saveSetup()">Speichern</button>
   </div>
 </div>
 
 <div id="app" style="display:none">
-  <h1>Eversports</h1>
-  <div class="week" id="week-label"></div>
-  <div id="courses"></div>
+  <div class="header">
+    <h1>Eversports</h1>
+    <span class="week-label" id="week-label"></span>
+  </div>
+  <div class="lock-badge hidden" id="lock-badge">Gesperrt</div>
+  <div id="days-container"></div>
+  <button class="lock-btn unlocked" id="lock-btn" onclick="toggleLock()">Woche sperren</button>
   <div class="status" id="status"></div>
 </div>
 
 <script>
-const DAYS = { Mo: "Montag", Di: "Dienstag", Mi: "Mittwoch", Do: "Donnerstag", Fr: "Freitag", Sa: "Samstag", So: "Sonntag" };
+let schedule = null; // { week, locked, days }
 
+// ── Config ────────────────────────────────────────────────
 function getConfig() {
-  return {
-    token: localStorage.getItem("gh_token"),
-    gistId: localStorage.getItem("gist_id"),
-  };
+  return { token: localStorage.getItem("gh_token"), gistId: localStorage.getItem("gist_id") };
 }
-
 function saveSetup() {
-  const token = document.getElementById("token-input").value.trim();
+  const token  = document.getElementById("token-input").value.trim();
   const gistId = document.getElementById("gist-input").value.trim();
   if (!token || !gistId) return alert("Bitte beide Felder ausfüllen.");
   localStorage.setItem("gh_token", token);
@@ -69,104 +95,139 @@ function saveSetup() {
   init();
 }
 
-async function fetchSchedule(gistId) {
+// ── Gist I/O ──────────────────────────────────────────────
+async function loadGist() {
+  const { gistId } = getConfig();
   const res = await fetch(`https://api.github.com/gists/${gistId}`);
-  if (!res.ok) throw new Error("Gist nicht gefunden.");
+  if (!res.ok) throw new Error(`Gist nicht gefunden (${res.status})`);
   const data = await res.json();
-  const file = data.files["schedule.json"];
-  if (!file) return { week: "–", courses: [] };
+  const file = data.files?.["schedule.json"];
+  if (!file) return { week: "–", locked: false, days: [] };
   const parsed = JSON.parse(file.content);
-  return { week: parsed.week ?? "–", courses: parsed.courses ?? [] };
+  return {
+    week:   parsed.week   ?? "–",
+    locked: parsed.locked ?? false,
+    days:   parsed.days   ?? [],
+  };
 }
-
-async function saveSchedule(courses, week) {
+async function saveGist() {
   const { token, gistId } = getConfig();
-  const content = JSON.stringify({ week, courses }, null, 2);
+  const content = JSON.stringify(schedule, null, 2);
   const res = await fetch(`https://api.github.com/gists/${gistId}`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ files: { "schedule.json": { content } } }),
   });
-  if (!res.ok) throw new Error("Speichern fehlgeschlagen.");
+  if (!res.ok) throw new Error(`Speichern fehlgeschlagen (${res.status})`);
 }
 
-let schedule = null;
-
-function renderCourses() {
-  const container = document.getElementById("courses");
-  container.innerHTML = "";
+// ── Render ────────────────────────────────────────────────
+function render() {
+  const locked = schedule.locked;
   document.getElementById("week-label").textContent = `Woche ${schedule.week}`;
+  document.getElementById("lock-badge").classList.toggle("hidden", !locked);
+  const btn = document.getElementById("lock-btn");
+  btn.textContent = locked ? "Woche entsperren" : "Woche sperren";
+  btn.className   = "lock-btn " + (locked ? "locked" : "unlocked");
 
-  if (schedule.courses.length === 0) {
-    container.innerHTML = '<p style="color:#888;font-size:14px;text-align:center;padding:20px">Noch keine Kurse – wird jeden Sonntag automatisch befüllt.</p>';
+  const container = document.getElementById("days-container");
+  container.innerHTML = "";
+
+  if (schedule.days.length === 0) {
+    container.innerHTML = '<p class="empty-note">Noch keine Kurse.<br>Wird jeden Sonntag automatisch befüllt.</p>';
     return;
   }
 
-  schedule.courses.forEach((course, i) => {
-    const d = new Date(course.date + "T12:00:00Z");
-    const dateFormatted = d.toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
+  schedule.days.forEach((day, i) => {
+    const dt = new Date(day.date + "T12:00:00Z");
+    const dateLabel = dt.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
+    const bookDt = new Date(day.bookingDate + "T12:00:00Z");
+    const bookLabel = bookDt.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "UTC" });
 
-    const div = document.createElement("div");
-    div.className = "course" + (course.enabled ? "" : " disabled");
+    const card = document.createElement("div");
+    card.className = "card" + (day.enabled ? "" : " off");
 
-    div.innerHTML = `
-      <button class="toggle ${course.enabled ? "on" : ""}" onclick="toggleCourse(${i})"></button>
-      <div class="info">
-        <div class="date">${dateFormatted}</div>
-        <div class="time-row">
-          <span class="time">⏰</span>
-          <input class="time-input" type="time" value="${course.time}" onchange="changeTime(${i}, this.value)">
-          <span class="save-hint" id="hint-${i}">✓ gespeichert</span>
+    const chipsHtml = day.sessions.length > 0
+      ? day.sessions.map(s => `
+          <button class="chip ${s.time === day.selectedTime ? "selected" : ""}"
+            data-day="${i}" data-time="${s.time}" data-uuid="${s.uuid}"
+            onclick="selectChip(${i},'${s.time}','${s.uuid}')"
+            ${locked ? "disabled" : ""}>${s.time}</button>
+        `).join("")
+      : '<span class="no-sessions">Keine Sessions verfügbar</span>';
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="info">
+          <div class="day-name">${day.dayName}</div>
+          <div class="date-sub">${dateLabel}</div>
+          <div class="booking-date">Buchung am ${bookLabel}</div>
         </div>
+        <button class="toggle ${day.enabled ? "on" : ""}"
+          onclick="toggleDay(${i})"
+          ${locked ? "disabled" : ""}></button>
       </div>
+      <div class="chips">${chipsHtml}</div>
     `;
-    container.appendChild(div);
+    container.appendChild(card);
   });
 }
 
-async function toggleCourse(i) {
-  schedule.courses[i].enabled = !schedule.courses[i].enabled;
-  renderCourses();
+// ── Actions ───────────────────────────────────────────────
+async function selectChip(dayIndex, time, uuid) {
+  if (schedule.locked) return;
+  schedule.days[dayIndex].selectedTime = time;
+  schedule.days[dayIndex].selectedUuid = uuid;
+  render();
   await persist();
 }
 
-async function changeTime(i, value) {
-  schedule.courses[i].time = value;
+async function toggleDay(i) {
+  if (schedule.locked) return;
+  schedule.days[i].enabled = !schedule.days[i].enabled;
+  render();
   await persist();
-  const hint = document.getElementById(`hint-${i}`);
-  if (hint) { hint.style.display = "inline"; setTimeout(() => hint.style.display = "none", 2000); }
+}
+
+async function toggleLock() {
+  schedule.locked = !schedule.locked;
+  render();
+  await persist();
 }
 
 async function persist() {
   const status = document.getElementById("status");
+  status.textContent = "Speichern…";
+  status.className = "status";
   try {
-    await saveSchedule(schedule.courses, schedule.week);
-    status.textContent = "Gespeichert ✓";
-    status.className = "status";
-    setTimeout(() => status.textContent = "", 2000);
+    await saveGist();
+    status.textContent = "Gespeichert";
+    setTimeout(() => { status.textContent = ""; }, 2000);
   } catch (e) {
     status.textContent = "Fehler: " + e.message;
     status.className = "status error";
   }
 }
 
+// ── Init ──────────────────────────────────────────────────
 async function init() {
   const { token, gistId } = getConfig();
   if (!token || !gistId) {
     document.getElementById("setup").style.display = "block";
-    document.getElementById("app").style.display = "none";
+    document.getElementById("app").style.display   = "none";
     return;
   }
   document.getElementById("setup").style.display = "none";
-  document.getElementById("app").style.display = "block";
-  document.getElementById("status").textContent = "Lade…";
+  document.getElementById("app").style.display   = "block";
+  const status = document.getElementById("status");
+  status.textContent = "Lade…";
   try {
-    schedule = await fetchSchedule(gistId);
-    renderCourses();
-    document.getElementById("status").textContent = "";
+    schedule = await loadGist();
+    render();
+    status.textContent = "";
   } catch (e) {
-    document.getElementById("status").textContent = "Fehler: " + e.message;
-    document.getElementById("status").className = "status error";
+    status.textContent = "Fehler: " + e.message;
+    status.className = "status error";
   }
 }
 
