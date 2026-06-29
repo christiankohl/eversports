@@ -79,7 +79,11 @@ async function waitForRelease(releaseTime) {
 
   const isTest = !!process.env.TARGET_DATE;
   const browser = await chromium.launch({ headless: !isTest, channel: isTest ? "chrome" : undefined });
-  const context = await browser.newContext({ storageState: "auth.json" });
+  const context = await browser.newContext({
+    storageState: "auth.json",
+    locale: "de-DE",
+    timezoneId: "Europe/Berlin",
+  });
   const page = await context.newPage();
 
   await page.goto(STUDIO_URL, { waitUntil: "domcontentloaded" });
@@ -135,7 +139,7 @@ async function waitForRelease(releaseTime) {
   await page.screenshot({ path: "screenshot-activity.png" });
   console.log("Screenshot: screenshot-activity.png");
 
-  const bookLink = page.getByRole("link", { name: /jetzt buchen|book now/i });
+  const bookLink = page.getByRole("link", { name: /jetzt buchen/i });
   await bookLink.waitFor({ timeout: 20000 });
   await bookLink.click();
   console.log("'Jetzt buchen' geklickt");
@@ -143,14 +147,14 @@ async function waitForRelease(releaseTime) {
   // Phoenix: warten bis alle Inhalte geladen
   await page.waitForURL(/\/phoenix\//, { timeout: 15000 });
   // Warten bis Continue-Button erscheint (Seite geladen, aber Karten evtl. noch im Skeleton)
-  await page.getByRole("button", { name: /continue|weiter/i }).waitFor({ timeout: 20000 });
+  await page.getByRole("button", { name: /weiter/i }).waitFor({ timeout: 20000 });
   await page.waitForTimeout(4000); // Karten-Skeleton abwarten
   await page.screenshot({ path: "screenshot-phoenix.png" });
   console.log("Phoenix-Seite geladen:", page.url());
 
   // Erste Pass-Karte auswählen (alle Buttons außer Continue/Weiter)
   const productCard = page.locator("button")
-    .filter({ hasNot: page.locator("text=/Continue|Weiter/i") })
+    .filter({ hasNot: page.locator("text=/Weiter/i") })
     .first();
   if (await productCard.count() > 0) {
     await productCard.click();
@@ -158,10 +162,14 @@ async function waitForRelease(releaseTime) {
     console.log("Produkt ausgewählt");
   }
 
-  const checkoutButton = page.getByRole("button", { name: /continue|weiter/i });
+  const checkoutButton = page.getByRole("button", { name: /weiter/i });
   await checkoutButton.waitFor({ timeout: 15000 });
   await checkoutButton.click();
-  console.log("Continue geklickt");
+  console.log("Next/Weiter geklickt");
+
+  await page.waitForTimeout(4000);
+  await page.screenshot({ path: "screenshot-after-next.png" });
+  console.log("Nach Next:", page.url());
 
   await page.waitForURL(/\/confirmation/, { timeout: 15000 });
   console.log("Buchung bestätigt ✅", page.url());
