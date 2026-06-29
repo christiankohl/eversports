@@ -123,23 +123,24 @@ async function waitForRelease(releaseTime) {
     process.exit(0);
   }
 
-  // Slot → Activity-Seite
   console.log("Slot gefunden → öffnen");
-  // UUID direkt aus dem Slot lesen → Activity-Seite überspringen
-  const uuid = await slot.first().getAttribute("data-uuid");
-  const venueId = "e4ebe91e-e4b4-450a-b32c-f4ba46e6e936";
-  console.log(`Session UUID: ${uuid}`);
+  await slot.first().scrollIntoViewIfNeeded();
+  const box = await slot.first().boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 
-  await page.goto(
-    `https://www.eversports.de/phoenix?bookableItemId=${uuid}&origin=eversport&venueId=${venueId}`,
-    { waitUntil: "domcontentloaded" }
-  );
-  await page.waitForURL(/\/phoenix\//, { timeout: 10000 });
+  // Activity-Seite: "Jetzt buchen" Link klicken
+  await page.waitForURL(/\/activity\//, { timeout: 15000 });
+  console.log("Activity-Seite:", page.url());
 
-  // Warten bis Phoenix-Seite vollständig geladen (Stornierungsbedingungen = Seite bereit)
+  const bookLink = page.getByRole("link", { name: /jetzt buchen/i });
+  await bookLink.waitFor({ timeout: 20000 });
+  await bookLink.click();
+  console.log("'Jetzt buchen' geklickt");
+
+  // Phoenix: warten bis Seite bereit, dann Produkt + Checkout
+  await page.waitForURL(/\/phoenix\//, { timeout: 15000 });
   await page.getByRole("button", { name: /stornierungsbedingungen/i }).waitFor({ timeout: 20000 });
 
-  // Produkt auswählen (erste Karte)
   const productCard = page.locator("button")
     .filter({ hasNot: page.locator("text=Stornierungsbedingungen") })
     .filter({ hasNot: page.locator("text=Jetzt buchen") })
