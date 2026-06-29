@@ -136,21 +136,25 @@ async function waitForRelease(releaseTime) {
   );
   await page.waitForURL(/\/phoenix\//, { timeout: 10000 });
 
-  // Produkt auswählen (erste Karte) und buchen
+  // Warten bis Phoenix-Seite vollständig geladen (Stornierungsbedingungen = Seite bereit)
+  await page.getByRole("button", { name: /stornierungsbedingungen/i }).waitFor({ timeout: 20000 });
+
+  // Produkt auswählen (erste Karte)
   const productCard = page.locator("button")
     .filter({ hasNot: page.locator("text=Stornierungsbedingungen") })
     .filter({ hasNot: page.locator("text=Jetzt buchen") })
     .first();
   if (await productCard.count() > 0) {
     await productCard.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1500);
+    console.log("Produkt ausgewählt");
   }
 
   const checkoutButton = page.getByRole("button", { name: /jetzt buchen/i });
-  await checkoutButton.waitFor({ timeout: 5000 });
+  await checkoutButton.waitFor({ timeout: 15000 });
   await checkoutButton.click();
 
-  await page.waitForURL(/\/confirmation/, { timeout: 10000 });
+  await page.waitForURL(/\/confirmation/, { timeout: 15000 });
   console.log("Buchung bestätigt ✅", page.url());
 
   await browser.close();
