@@ -80,10 +80,15 @@ async function scrapeSessions(page, targetDate) {
 (async () => {
   const now = new Date();
 
-  // Alle Wochentage Mo–So der kommenden Woche (today+7…today+13 ab Sonntag)
+  // Nächsten Sonntag finden (von jedem Wochentag aus gleich)
+  const dow = berlinDate(now).getDay(); // 0 = Sonntag
+  const daysToNextSunday = dow === 0 ? 7 : (7 - dow);
+  const weekStart = addDays(now, daysToNextSunday); // immer ein Sonntag
+
+  // Zielwoche: Sonntag bis Samstag (7 Tage)
   const targetDates = [];
-  for (let offset = 7; offset <= 13; offset++) {
-    const d  = addDays(now, offset);
+  for (let offset = 0; offset <= 6; offset++) {
+    const d  = addDays(weekStart, offset);
     const ds = dateStr(d);
     const wd = isoWeekday(d);
     targetDates.push({ date: ds, weekday: wd, dayName: DAY_NAMES_LONG[wd] });
@@ -130,7 +135,9 @@ async function scrapeSessions(page, targetDate) {
     process.exit(0);
   }
 
-  const week    = isoWeek(new Date(targetDates[0].date + "T12:00:00Z"));
+  // ISO-Woche vom Montag der Zielwoche (Sonntag gehört zur Vorwoche)
+  const mondayEntry = targetDates.find(d => d.weekday === 1) ?? targetDates[1];
+  const week = isoWeek(new Date(mondayEntry.date + "T12:00:00Z"));
   const content = JSON.stringify({ week, locked: false, days }, null, 2);
 
   const gistRes = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
