@@ -80,17 +80,23 @@ async function scrapeSessions(page, targetDate) {
 (async () => {
   const now = new Date();
 
-  // Nächsten Sonntag finden (von jedem Wochentag aus gleich)
-  const dow = berlinDate(now).getDay(); // 0 = Sonntag
-  const daysToNextSunday = dow === 0 ? 7 : (7 - dow);
-  const weekStart = addDays(now, daysToNextSunday); // immer ein Sonntag
+  // Berlin-Datum als UTC-Mittag verankern → vermeidet alle Zeitzonen-Off-by-ones
+  const berlinTodayStr = dateStr(now);
+  const berlinToday = new Date(berlinTodayStr + "T12:00:00Z");
+  const dow = berlinToday.getUTCDay(); // 0=So, 1=Mo, ..., 6=Sa
 
-  // Zielwoche: Sonntag bis Samstag (7 Tage)
+  // Nächsten Montag berechnen: So→+8, Mo→+7, Di→+6, …, Sa→+2
+  const daysToNextMonday = dow === 0 ? 8 : (8 - dow);
+  const nextMonday = new Date(berlinToday);
+  nextMonday.setUTCDate(berlinToday.getUTCDate() + daysToNextMonday);
+
+  // Zielwoche: Montag–Sonntag (deutsches Format)
   const targetDates = [];
   for (let offset = 0; offset <= 6; offset++) {
-    const d  = addDays(weekStart, offset);
-    const ds = dateStr(d);
-    const wd = isoWeekday(d);
+    const d  = new Date(nextMonday);
+    d.setUTCDate(nextMonday.getUTCDate() + offset);
+    const ds = d.toLocaleDateString("en-CA", { timeZone: "UTC" });
+    const wd = d.getUTCDay() === 0 ? 7 : d.getUTCDay();
     targetDates.push({ date: ds, weekday: wd, dayName: DAY_NAMES_LONG[wd] });
   }
 
