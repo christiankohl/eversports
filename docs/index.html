@@ -132,7 +132,9 @@ function saveSetup() {
 
 // ── Gist I/O ──────────────────────────────────────────────
 async function loadGist() {
-  const res = await fetch(`https://api.github.com/gists/${cfg().gistId}`);
+  const { token, gistId } = cfg();
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const res = await fetch(`https://api.github.com/gists/${gistId}`, { headers });
   if (!res.ok) throw new Error(`Gist Fehler ${res.status}`);
   const data = await res.json();
   const raw  = data.files?.["schedule.json"]?.content;

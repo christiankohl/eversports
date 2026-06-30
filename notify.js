@@ -143,8 +143,29 @@ async function scrapeSessions(page, targetDate) {
 
   // ISO-Woche vom Montag der Zielwoche (Sonntag gehört zur Vorwoche)
   const mondayEntry = targetDates.find(d => d.weekday === 1) ?? targetDates[1];
-  const week = isoWeek(new Date(mondayEntry.date + "T12:00:00Z"));
-  const content = JSON.stringify({ week, locked: false, days }, null, 2);
+  const mondayDate = new Date(mondayEntry.date + "T12:00:00Z");
+  const week = isoWeek(mondayDate);
+  const kwNum = parseInt(week.split("-W")[1]);
+
+  const lastDate = new Date(mondayDate);
+  lastDate.setUTCDate(mondayDate.getUTCDate() + 6);
+  const fmtShort = d => d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", timeZone: "UTC" });
+
+  // Bestehenden locked-Status beibehalten, wenn selbe Woche
+  let locked = false;
+  try {
+    const existingRes = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      headers: { Authorization: `Bearer ${GIST_TOKEN}` },
+    });
+    if (existingRes.ok) {
+      const existingData = await existingRes.json();
+      const existingRaw = existingData.files?.["schedule.json"]?.content ?? "{}";
+      const existing = JSON.parse(existingRaw);
+      if (existing.week === week) locked = existing.locked ?? false;
+    }
+  } catch { /* ignorieren */ }
+
+  const content = JSON.stringify({ week, locked, days }, null, 2);
 
   const gistRes = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
     method: "PATCH",
@@ -159,18 +180,19 @@ async function scrapeSessions(page, targetDate) {
     .map(d => {
       const dt = new Date(d.date + "T12:00:00Z");
       const label = dt.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "UTC" });
-      return `${label}  ${d.selectedTime}`;
+      return `${label} - ${d.selectedTime.replace(":", ".")} Uhr`;
     });
 
   await fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
     method: "POST",
-    headers: {
-      Title: `Kurse Woche ${week}`,
-      Actions: `view, Verwalten, https://christiankohl.github.io/eversports/`,
-    },
-    body: lines.length > 0
-      ? `Buchbar naechste Woche:\n${lines.join("\n")}`
-      : "Keine Kurse naechste Woche.",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: `Kurse KW ${kwNum} / ${fmtShort(mondayDate)} - ${fmtShort(lastDate)} 🏋️`,
+      message: lines.length > 0
+        ? `📅 Default naechste Woche:\n${lines.join("\n")}`
+        : "Keine Kurse naechste Woche.",
+      actions: [{ action: "view", label: "Verwalten", url: "https://christiankohl.github.io/eversports/" }],
+    }),
   });
   console.log("Notification gesendet.");
 })();
