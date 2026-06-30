@@ -4,8 +4,8 @@ on:
   schedule:
     # So 08:00 UTC → 10:00 Berlin: Wochenvorschau + Notification
     - cron: "0 8 * * 0"
-    # Mo 07:45 UTC → wartet auf 10:00 Berlin (Sa-Kurs)
-    - cron: "45 7 * * 1"
+    # Mo+Di 07:45 UTC → wartet auf 10:00 Berlin (Sa-Kurs / So-Kurs)
+    - cron: "45 7 * * 1,2"
     # So/Mi/Do/Fr/Sa 14:45 UTC → wartet auf 17:00 Berlin (Fr/Mo/Di/Mi/Do-Kurs)
     - cron: "45 14 * * 0,3,4,5,6"
   workflow_dispatch:

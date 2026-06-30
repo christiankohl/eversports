@@ -15,9 +15,9 @@ const GROUP_ID   = "71206";
 const BIWEEKLY_START = new Date("2026-03-09T00:00:00Z");
 
 // Standardzeiten für Default-Vorauswahl pro Wochentag
-const DEFAULT_TIMES = { 1: "17:00", 2: "17:00", 3: "17:00", 4: "17:00", 5: "17:00", 6: "10:00" };
-// Default aktiviert: Mo/Di immer, Mi/Do default aus, Fr/Sa nur bei Biweekly
-const DEFAULT_ENABLED = { 1: true, 2: true, 3: false, 4: false, 5: null, 6: null };
+const DEFAULT_TIMES = { 1: "17:00", 2: "17:00", 3: "17:00", 4: "17:00", 5: "17:00", 6: "10:00", 7: "09:00" };
+// Mo/Di immer vorausgewählt, Mi/Do/So kein Default, Fr/Sa nur auf Biweekly-Wochen
+const DEFAULT_ENABLED = { 1: true, 2: true, 3: false, 4: false, 5: null, 6: null, 7: false };
 const DAY_NAMES_LONG = ["", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
 
 function berlinDate(d) { return new Date(d.toLocaleString("en-US", { timeZone: "Europe/Berlin" })); }
@@ -80,13 +80,12 @@ async function scrapeSessions(page, targetDate) {
 (async () => {
   const now = new Date();
 
-  // Alle Wochentage Mo–Sa der kommenden Woche (today+7…today+13 ab Sonntag)
+  // Alle Wochentage Mo–So der kommenden Woche (today+7…today+13 ab Sonntag)
   const targetDates = [];
   for (let offset = 7; offset <= 13; offset++) {
     const d  = addDays(now, offset);
     const ds = dateStr(d);
     const wd = isoWeekday(d);
-    if (wd === 7) continue; // Sonntag überspringen
     targetDates.push({ date: ds, weekday: wd, dayName: DAY_NAMES_LONG[wd] });
   }
 

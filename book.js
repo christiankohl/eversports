@@ -9,6 +9,7 @@ const BIWEEKLY_START = new Date("2026-03-09T00:00:00Z");
 
 // Buchung 5 Tage vor dem Kurs. Key = ISO-Wochentag HEUTE in Berlin.
 const SCHEDULE = {
+  2: { releaseTime: "10:00", biweekly: false }, // Di → bucht So
   3: { releaseTime: "17:00", biweekly: false }, // Mi → bucht Mo
   4: { releaseTime: "17:00", biweekly: false }, // Do → bucht Di
   5: { releaseTime: "17:00", biweekly: false }, // Fr → bucht Mi
