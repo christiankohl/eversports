@@ -183,10 +183,11 @@ async function scrapeSessions(page, targetDate) {
       return `${label} - ${d.selectedTime.replace(":", ".")} Uhr`;
     });
 
-  await fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
+  await fetch("https://ntfy.sh", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      topic: NTFY_TOPIC,
       title: `Kurse KW ${kwNum} / ${fmtShort(mondayDate)} - ${fmtShort(lastDate)} 🏋️`,
       message: lines.length > 0
         ? `📅 Default naechste Woche:\n${lines.join("\n")}`
